@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+        - PNPM_VERSION=9.12.0
+    image: shop-api:latest
+    hostname: shop-api
+    restart: unless-stopped
+    env_file:
+      - ./api/.env.development
+    ports:
+      - ${API_PORT}:${API_PORT}
+    # entrypoint: docker-entrypoint.sh
+    networks:
+      - backend-net
+    depends_on:
+      shop-db:
+        condition: service_healthy
+    # command: ["pnpm", "run", "start:dev"]
+
+  shop-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=shop_db
+    expose:
+      - 5432
+    networks:
+      - backend-net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5432"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  pgdata:
+
+networks:
+  backend-net:
