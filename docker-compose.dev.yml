@@ -16,6 +16,7 @@ services:
     # entrypoint: docker-entrypoint.sh
     networks:
       - backend-net
+      - cache-net
     depends_on:
       shop-db:
         condition: service_healthy
@@ -31,6 +32,7 @@ services:
       - 5432
     networks:
       - backend-net
+      - admin-net
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -40,8 +42,27 @@ services:
       retries: 5
       start_period: 5s
 
+  redis:
+    image: redis:7-alpine
+    hostname: shop-redis
+    restart: unless-stopped
+    networks:
+      - cache-net
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT} # for dev using port would be better than using expose
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+
+  admin:
+    image: adminer:latest
+    ports:
+      - 8080:8080
+    networks:
+      - admin-net
+
 volumes:
   pgdata:
 
 networks:
   backend-net:
+  admin-net:
+  cache-net:
