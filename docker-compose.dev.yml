@@ -35,6 +35,8 @@ services:
         aliases:
           - database
       admin-net:
+        aliases:
+          - database
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -57,7 +59,7 @@ services:
   admin:
     image: adminer:latest
     ports:
-      - 8080:8080
+      - 3001:8080
     networks:
       - admin-net
 
@@ -67,5 +69,5 @@ volumes:
 networks:
   backend-net:
   admin-net:
-    internal: true
+    # internal: true. I think this is not needed because we are exposing the adminer port to the host machine. if we make this true we are not be able to access this servier from brower.
   cache-net:
