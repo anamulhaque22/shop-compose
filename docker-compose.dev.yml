@@ -67,4 +67,5 @@ volumes:
 networks:
   backend-net:
   admin-net:
+    internal: true
   cache-net:
