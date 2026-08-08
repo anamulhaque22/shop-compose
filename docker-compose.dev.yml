@@ -13,7 +13,6 @@ services:
       - ./api/.env.development
     ports:
       - ${API_PORT}:${API_PORT}
-    # entrypoint: docker-entrypoint.sh
     networks:
       - backend-net
       - cache-net
@@ -24,7 +23,6 @@ services:
     volumes:
       - ./api:/app
       - /app/node_modules
-    # command: ["pnpm", "run", "start:dev"]
 
   shop-db:
     image: postgres:16-alpine
