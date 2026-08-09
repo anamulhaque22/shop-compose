@@ -1,3 +1,8 @@
+x-default-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
 services:
   api:
     build:
@@ -8,6 +13,19 @@ services:
         - PNPM_VERSION=9.12.0
     image: shop-api:latest
     hostname: shop-api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: "12G"
+          cpus: "1.0"
+        reservations:
+          memory: "256M"
+          cpus: "0.5"
     restart: unless-stopped
     env_file:
       - ./api/.env.development
@@ -31,6 +49,7 @@ services:
       # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       POSTGRES_DB: shop_db
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    logging: *default-logging
     ports:
       - 5432:5432
     networks:
