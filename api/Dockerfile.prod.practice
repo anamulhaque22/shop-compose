@@ -13,12 +13,9 @@ RUN --mount=type=cache,target=/root/.pnpm/store \
 
 COPY . .
 
-RUN pnpm build
+RUN pnpm run build
 
 FROM node:22-alpine AS production
-
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
 
 ARG PNPM_VERSION
 
@@ -26,17 +23,14 @@ WORKDIR /app
 
 RUN npm install -g pnpm@${PNPM_VERSION}
 
-COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,target=/root/.pnpm/store \
     pnpm install --frozen-lockfile --prod
 
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder /app/dist ./dist
 
-USER nodejs
+USER node
 
 EXPOSE 3000
 
-ENTRYPOINT [ "node" ]
-
-CMD [ "dist/main.js" ]
-
+CMD ["pnpm","run","start:prod"]

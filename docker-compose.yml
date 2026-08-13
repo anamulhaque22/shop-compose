@@ -1,0 +1,80 @@
+# Asha Store - Base Docker compose file
+name: "asha-store"
+services:
+  api:
+    hostname: shop-api
+    restart: unless-stopped
+    networks:
+      - backend-net
+      - cache-net
+    depends_on:
+      shop-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT}/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  shop-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: shop_db
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    networks:
+      - backend-net
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5432"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    hostname: shop-redis
+    restart: unless-stopped
+    environment:
+      REDIS_PORT: ${REDIS_PORT}
+    networks:
+      - cache-net
+    secrets:
+      - redis_password
+    command: >
+      sh -c "redis-server --requirepass $$(cat /run/secrets/redis_password)"
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    networks:
+      - backend-net
+
+volumes:
+  pg_data:
+networks:
+  backend-net:
+  cache-net:
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt

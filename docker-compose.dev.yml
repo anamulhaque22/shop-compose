@@ -1,8 +1,3 @@
-x-default-logging: &default-logging
-  driver: "json-file"
-  options:
-    max-size: "10m"
-    max-file: "3"
 services:
   api:
     build:
@@ -11,99 +6,23 @@ services:
       args:
         - NODE_ENVIRONMENT=development
         - PNPM_VERSION=9.12.0
-    image: shop-api:latest
-    hostname: shop-api
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: "12G"
-          cpus: "1.0"
-        reservations:
-          memory: "256M"
-          cpus: "0.5"
-    restart: unless-stopped
+    image: asha-store:dev-v1
     env_file:
       - ./api/.env.development
-    ports:
-      - ${API_PORT}:${API_PORT}
-    networks:
-      - backend-net
-      - cache-net
-    depends_on:
-      shop-db:
-        condition: service_healthy
-
+    environment:
+      PORT: ${PORT}
+    # ports:
+    #   - ${PORT}:${PORT} # api service will access through nginx
+    expose:
+      - ${PORT}
     volumes:
       - ./api:/app
       - /app/node_modules
 
   shop-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      POSTGRES_DB: shop_db
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    logging: *default-logging
     ports:
-      - 5432:5432
-    networks:
-      backend-net:
-        aliases:
-          - database
-      admin-net:
-        aliases:
-          - database
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    secrets:
-      - db_password
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5432"]
-      interval: 1s
-      timeout: 1s
-      retries: 5
-      start_period: 5s
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
   redis:
-    image: redis:7-alpine
-    hostname: shop-redis
-    restart: unless-stopped
-    networks:
-      - cache-net
     ports:
-      - ${REDIS_PORT}:${REDIS_PORT} # for dev using port would be better than using expose
-    # command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
-    secrets:
-      - redis_password
-    command: >
-      sh -c "redis-server --requirepass $$(cat /run/secrets/redis_password)"
-
-  admin:
-    image: adminer:latest
-    profiles:
-      - tools
-    ports:
-      - 3001:8080
-    networks:
-      - admin-net
-
-volumes:
-  pgdata:
-
-networks:
-  backend-net:
-  admin-net:
-    # internal: true. I think this is not needed because we are exposing the adminer port to the host machine. if we make this true we are not be able to access this servier from brower.
-  cache-net:
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  redis_password:
-    file: ./secrets/redis_password.txt
+      - ${REDIS_PORT}:${REDIS_PORT}
