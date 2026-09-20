@@ -1,31 +1,82 @@
-name: CI Practice Pipeline
+name: CI
 
 on:
   push:
-    branches: [test]
+    branches: [main]
   pull_request:
-    branches: [test]
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Nodejs
-        uses: actions/setup-node@v7
+      - name: Setup pnpm + Node
+        uses: pnpm/setup@v1
         with:
-          node-version: "22"
-
-      - name: Install pnpm
-        run: npm install -g pnpm@9.12.0
+          version: 9
+          runtime: node@22
+          # cache: true
+          # cache-dependency-path: api/pnpm-lock.yaml
+          install: false
 
       - name: Install dependencies
         working-directory: ./api
         run: pnpm install --frozen-lockfile
 
-      - name: Run test
+      - name: Run tests
+        run: pnpm test
         working-directory: ./api
-        run: pnpm run test
+        env:
+          NODE_ENV: test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm + Node
+        uses: pnpm/setup@v1
+        with:
+          version: 9
+          runtime: node@22
+          # cache: true
+          # cache-dependency-path: api/pnpm-lock.yaml
+          install: false
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        working-directory: ./api
+        run: pnpm run lint
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm + Node
+        uses: pnpm/setup@v1
+        with:
+          version: 9
+          runtime: node@22
+          # cache: true
+          # cache-dependency-path: api/pnpm-lock.yaml
+          install: false
+
+      - name: Check pnpm version
+        run: "echo pnpm version: $(pnpm --version)"
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: pnpm install --frozen-lockfile
+
+      - name: Run type check
+        working-directory: ./api
+        run: pnpm run type-check
