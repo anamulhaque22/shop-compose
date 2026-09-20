@@ -19,7 +19,7 @@ jobs:
           version: 9
           runtime: node@22
           # cache: true
-          # cache-dependency-path: api/pnpm-lock.yaml
+          cache-dependency-path: api/pnpm-lock.yaml
           install: false
 
       - name: Install dependencies
@@ -44,7 +44,7 @@ jobs:
           version: 9
           runtime: node@22
           # cache: true
-          # cache-dependency-path: api/pnpm-lock.yaml
+          cache-dependency-path: api/pnpm-lock.yaml
           install: false
 
       - name: Install dependencies
@@ -67,7 +67,7 @@ jobs:
           version: 9
           runtime: node@22
           # cache: true
-          # cache-dependency-path: api/pnpm-lock.yaml
+          cache-dependency-path: api/pnpm-lock.yaml
           install: false
 
       - name: Check pnpm version
