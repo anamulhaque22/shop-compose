@@ -142,5 +142,5 @@ jobs:
           file: ./api/Dockerfile.prod
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:shop-store-${{ github.sha }}
-            ghcr.io/${{ github.repository }}:shop-store:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
