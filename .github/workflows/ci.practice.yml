@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +23,6 @@ jobs:
           runtime: node@22
           cache: true
           cache-dependency-path: api/pnpm-lock.yaml
-          working-directory: ./api
           install: false
 
       - name: Install dependencies
@@ -35,6 +37,9 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,7 +51,6 @@ jobs:
           runtime: node@22
           cache: true
           cache-dependency-path: api/pnpm-lock.yaml
-          working-directory: ./api
           install: false
 
       - name: Install dependencies
@@ -59,6 +63,9 @@ jobs:
 
   type-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,7 +77,6 @@ jobs:
           runtime: node@22
           cache: true
           cache-dependency-path: api/pnpm-lock.yaml
-          working-directory: ./api
           install: false
 
       - name: Check pnpm version
@@ -83,3 +89,48 @@ jobs:
       - name: Run type check
         working-directory: ./api
         run: pnpm run type-check
+
+  build:
+    needs: [test, lint, type-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm + Node
+        uses: pnpm/setup@v2
+        with:
+          version: 11
+          runtime: node@22
+          cache: true
+          cache-dependency-path: api/pnpm-lock.yaml
+          install: false
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        working-directory: ./api
+        run: pnpm run build
+
+  build-image:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          file: ./api/Dockerfile.prod
+          push: false
+          tags: shop-store:latest
