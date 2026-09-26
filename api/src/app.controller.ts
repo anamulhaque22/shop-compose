@@ -16,9 +16,7 @@ export class AppController {
 
   @Get('health')
   health() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const environment: string =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       this.configService.get<string>('NODE_ENV') ?? 'development';
 
     return {
