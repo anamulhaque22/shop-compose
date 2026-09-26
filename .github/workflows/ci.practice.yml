@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint-test-typecheck-build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,90 +35,20 @@ jobs:
         env:
           NODE_ENV: test
 
-  lint:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm + Node
-        uses: pnpm/setup@v2
-        with:
-          version: 11
-          runtime: node@22
-          cache: true
-          cache-dependency-path: api/pnpm-lock.yaml
-          install: false
-
-      - name: Install dependencies
-        working-directory: ./api
-        run: pnpm install --frozen-lockfile
-
-      - name: Run lint
-        working-directory: ./api
-        run: pnpm run lint
-
-  type-check:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm + Node
-        uses: pnpm/setup@v2
-        with:
-          version: 11
-          runtime: node@22
-          cache: true
-          cache-dependency-path: api/pnpm-lock.yaml
-          install: false
-
-      - name: Check pnpm version
-        run: "echo pnpm version: $(pnpm --version)"
-
-      - name: Install dependencies
-        working-directory: ./api
-        run: pnpm install --frozen-lockfile
-
       - name: Run type check
         working-directory: ./api
         run: pnpm run type-check
 
-  build:
-    needs: [test, lint, type-check]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm + Node
-        uses: pnpm/setup@v2
-        with:
-          version: 11
-          runtime: node@22
-          cache: true
-          cache-dependency-path: api/pnpm-lock.yaml
-          install: false
-
-      - name: Install dependencies
+      - name: Run lint
         working-directory: ./api
-        run: pnpm install --frozen-lockfile
+        run: pnpm run lint
 
       - name: Build project
         working-directory: ./api
         run: pnpm run build
 
   build-image:
-    needs: [build]
+    needs: [lint-test-typecheck-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -144,3 +74,25 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
             ghcr.io/${{ github.repository }}/shop-store:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          script: |
+            echo "Connected successfully"
+            whoami
+            docker --version
