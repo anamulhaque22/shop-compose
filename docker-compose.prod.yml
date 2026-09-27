@@ -6,12 +6,7 @@ x-default-logging: &default-logging
 
 services:
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile.prod
-      args:
-        - PNPM_VERSION=9.12.0
-    image: asha-store:prod-v1
+    image: ${IMAGE}
     cap_drop:
       - ALL
     cap_add:
@@ -21,6 +16,8 @@ services:
       - /tmp
     environment:
       PORT: ${PORT}
+    env_file:
+      - .env.production
     deploy:
       resources:
         limits:
@@ -32,12 +29,3 @@ services:
     logging: *default-logging
     ports:
       - ${PORT}:${PORT}
-
-  shop-db:
-    logging: *default-logging
-    expose:
-      - ${POSTGRES_PORT}
-  redis:
-    logging: *default-logging
-    expose:
-      - ${REDIS_PORT}
