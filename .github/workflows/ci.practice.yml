@@ -80,6 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    environment: production
     timeout-minutes: 10
     steps:
       - name: Checkout code
