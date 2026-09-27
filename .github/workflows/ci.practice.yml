@@ -82,6 +82,16 @@ jobs:
       contents: read
     timeout-minutes: 10
     steps:
+      - name: Copy deployment files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          source: "docker-compose.yml,docker-compose.prod.yml,nginx/nginx.conf"
+          target: "/home/deployer/app"
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -90,6 +100,19 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_SSH_PORT }}
           script: |
-            echo "Connected successfully"
-            whoami
-            docker --version
+            cd /home/deployer/app
+
+            cat <<EOF > .env.production
+            NODE_ENV=${{ vars.PROD_NODE_ENV }}
+            DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
+            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            EOF
+
+            chmod 600 .env.production
+
+            export IMAGE=ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
+            export PORT=${{ vars.PROD_PORT }}
+
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
