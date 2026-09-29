@@ -107,10 +107,8 @@ jobs:
           script: |
             cd /home/deployer/app
 
-            cat <<EOF > .env.production
-            NODE_ENV=${{ vars.PROD_NODE_ENV }}
-            DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
-            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            cat <<'EOF' > .env.production
+            ${{ secrets.PROD_ENV_FILE }}
             EOF
 
             chmod 600 .env.production
