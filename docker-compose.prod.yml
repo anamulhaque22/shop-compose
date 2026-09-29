@@ -27,5 +27,5 @@ services:
           memory: "512M"
           cpus: "0.5"
     logging: *default-logging
-    ports:
-      - ${PORT}:${PORT}
+    expose:
+      - ${PORT}
