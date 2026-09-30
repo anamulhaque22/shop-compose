@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  lint-test-typecheck-build:
+  lint-typecheck-build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -42,7 +42,7 @@ jobs:
         run: pnpm run build
 
   build-image:
-    needs: [lint-test-typecheck-build]
+    needs: [lint-typecheck-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
