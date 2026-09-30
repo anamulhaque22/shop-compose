@@ -2,3 +2,6 @@ secrets/
 bin/
 .env
 act
+node_modules/
+.env.local
+.env.*
