@@ -108,16 +108,23 @@ jobs:
             cd /home/deployer/app
 
             cat <<EOF > .env.production
-            NODE_ENV=${{ vars.PROD_NODE_ENV }}
-            DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}
-            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            ${{ secrets.PROD_ENV_FILE }}
             EOF
 
             chmod 600 .env.production
 
             export IMAGE=ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
-            export PORT=${{ vars.PROD_PORT }}
+            export PORT= 3000
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "Running database migrations..."
+            docker run --rm --env-file .env.production ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} pnpm run migration:migrate
+            if [ $? -ne 0 ]; then
+              echo "Database migrations failed. Aborting deployment."
+              exit 1
+            fi
+            echo "Database migrations completed successfully."
+
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d

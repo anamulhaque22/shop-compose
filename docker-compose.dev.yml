@@ -3,26 +3,13 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile.dev
-      args:
-        - NODE_ENVIRONMENT=development
-        - PNPM_VERSION=9.12.0
     image: asha-store:dev-v1
     env_file:
       - ./api/.env.development
     environment:
       PORT: ${PORT}
-    # ports:
-    #   - ${PORT}:${PORT} # api service will access through nginx
     expose:
       - ${PORT}
     volumes:
       - ./api:/app
       - /app/node_modules
-
-  shop-db:
-    ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
-
-  redis:
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
