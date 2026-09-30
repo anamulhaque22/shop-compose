@@ -124,7 +124,7 @@ jobs:
             --env-file .env.production \
             --entrypoint node_modules/.bin/drizzle-kit \
             ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
-            migrate  
+            migrate --config dist/drizzle.config.js
             if [ $? -ne 0 ]; then
               echo "Database migrations failed. Aborting deployment."
               exit 1
