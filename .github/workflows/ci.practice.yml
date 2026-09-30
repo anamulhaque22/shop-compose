@@ -122,8 +122,9 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
             docker run --rm \
             --env-file .env.production \
+            --entrypoint node_modules/.bin/drizzle-kit \
             ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
-            node_modules/.bin/drizzle-kit migrate
+            migrate  
             if [ $? -ne 0 ]; then
               echo "Database migrations failed. Aborting deployment."
               exit 1
