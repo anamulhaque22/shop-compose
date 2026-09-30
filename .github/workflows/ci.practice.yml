@@ -120,7 +120,11 @@ jobs:
 
             echo "Running database migrations...."
             docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
-            docker run --rm --env-file .env.production ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} pnpm run migration:migrate
+            docker run --rm \
+            --network app_backend-net \
+            --env-file .env.production \
+            ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
+            node_modules/.bin/drizzle-kit migrate
             if [ $? -ne 0 ]; then
               echo "Database migrations failed. Aborting deployment."
               exit 1
