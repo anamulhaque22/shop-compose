@@ -121,7 +121,6 @@ jobs:
             echo "Running database migrations...."
             docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
             docker run --rm \
-            --network app_backend-net \
             --env-file .env.production \
             ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
             node_modules/.bin/drizzle-kit migrate
