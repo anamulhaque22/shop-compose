@@ -114,11 +114,12 @@ jobs:
             chmod 600 .env.production
 
             export IMAGE=ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
-            export PORT= 3000
+            export PORT=3000
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "Running database migrations..."
+            echo "Running database migrations...."
+            docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
             docker run --rm --env-file .env.production ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} pnpm run migration:migrate
             if [ $? -ne 0 ]; then
               echo "Database migrations failed. Aborting deployment."
