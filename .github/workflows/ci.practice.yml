@@ -75,12 +75,15 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [build-image]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     environment: production
     timeout-minutes: 10
     steps:
@@ -131,5 +134,42 @@ jobs:
             # fi
             # echo "Database migrations completed successfully."
 
+            PREVIOUS_IMAGE=$(docker inspect simplenestapp-api-1 --format='{{.Config.Image}}' 2>/dev/null || echo "")
+
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+            echo "Waiting for application to become healthy..."
+
+            MAX_RETRIES=10
+            RETRY_INTERVAL=5
+            SUCCESS=false
+
+            for i in $(seq 1 $MAX_RETRIES); do
+              if curl -sf http://localhost:3000/health > /dev/null; then
+                echo "Health check passed on attempt $i"
+                SUCCESS=true
+                break
+              fi
+              echo "Attempt $i/$MAX_RETRIES failed, retrying in ${RETRY_INTERVAL}s..."
+              sleep $RETRY_INTERVAL
+            done
+
+            if [ "$SUCCESS" = false ]; then
+              echo "Health check failed after $MAX_RETRIES attempts. Deployment considered FAILED."
+              echo "--- Recent container logs ---"
+              docker logs simplenestapp-api-1 --tail 50
+            fi
+
+            echo "Health check failed. Rolling back to: $PREVIOUS_IMAGE"
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              export IMAGE=$PREVIOUS_IMAGE
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+              echo "Rollback completed. Previous version restored."
+            else
+              echo "No previous image found — cannot auto-rollback. Manual intervention required."
+            fi
+              exit 1
+            fi
+
+            echo "Deployment verified successfully."
