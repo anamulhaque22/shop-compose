@@ -118,18 +118,18 @@ jobs:
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "Running database migrations...."
-            docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
-            docker run --rm \
-            --env-file .env.production \
-            --entrypoint node_modules/.bin/drizzle-kit \
-            ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
-            migrate  
-            if [ $? -ne 0 ]; then
-              echo "Database migrations failed. Aborting deployment."
-              exit 1
-            fi
-            echo "Database migrations completed successfully."
+            # echo "Running database migrations...."
+            # docker pull ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }}
+            # docker run --rm \
+            # --env-file .env.production \
+            # --entrypoint node_modules/.bin/drizzle-kit \
+            # ghcr.io/${{ github.repository }}/shop-store:${{ github.sha }} \
+            # migrate --config ./dist/drizzle.cofig.js
+            # if [ $? -ne 0 ]; then
+            #   echo "Database migrations failed. Aborting deployment."
+            #   exit 1
+            # fi
+            # echo "Database migrations completed successfully."
 
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
